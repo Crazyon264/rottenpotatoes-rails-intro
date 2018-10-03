@@ -11,9 +11,56 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @movies = Movie.all
+    @all_ratings = Movie.all_ratings
+  
+   #is there a new session
+  if session[:sort] != true
+    session[:sort] = true
+    session[:selected_ratings] = @all_ratings
   end
-
+  
+  
+  if params[:sort] != nil
+     session[:sort] = params[:sort]
+  elsif session[:sort] != nil
+    redirect_to :rating => params[:rating], :sort => session[:sort] and return
+  end
+  
+  
+  
+    #If the params not nil, set the session to those params
+    if params[:rating] != nil
+     session[:selected_ratings] = params[:ratings]
+    elsif params[:rating] == nil and session[:selected_ratings] == nil
+     session[:selected_ratings] = @all_ratings
+     
+  
+    if params[:rating] != nil
+      session[:selected_ratings] = params[:rating]
+    elsif params[:rating] == nil and session[:selected_ratings] == nil
+      session[:selected_ratings] = @all_ratings
+      flash.keep
+      redirect_to movies_path :sort => @sort_choice, :ratings => @selected_ratings
+    end
+  
+    @selected_ratings = session[:selected_ratings]
+    @sort = session[:sort]
+  
+  
+    case @sort 
+    when 'title'
+      @movies = Movie.where(:rating => @selected_ratings.keys).order(:title)
+      @title_head = 'hilite'
+    when 'release_date' 
+      @movies = Movie.where(:rating => @selected_ratings.keys).order(:release_date)
+      @release_head = 'hilite'
+    else
+      @movies = Movie.all
+    end
+    
+    end 
+  end
+ 
   def new
     # default: render 'new' template
   end
@@ -41,5 +88,5 @@ class MoviesController < ApplicationController
     flash[:notice] = "Movie '#{@movie.title}' deleted."
     redirect_to movies_path
   end
-
 end
+
